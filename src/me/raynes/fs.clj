@@ -604,3 +604,40 @@
    [[with-mutable-cwd]]"
   [path]
   (set! *cwd* (file path)))
+
+(defmacro with-temp-dir
+  "Execute the `body` after binding a given vector of
+   symbols to temp directory instances.
+   will delete all temp directories after execution.
+  
+  Example:
+  ```
+  (macroexpand
+    '(with-temp-dir [folder1 folder2]
+      [folder1 folder2]))
+  ```
+  
+  Should produce:
+  ```
+  (let* [folder1 (me.raynes.fs/temp-dir "folder1")
+         folder2 (me.raynes.fs/temp-dir "folder2")]
+    (try
+      (do
+	      [folder1 folder2])
+      (finally
+	      (clojure.core/doseq [x__30864__auto__ [folder1 folder2]]
+	        (me.raynes.fs/delete-dir x__30864__auto__)))))
+  ```
+  "
+  
+  [folders & body]
+  (let [bindings (reduce
+                  (fn [acc f]
+                    (conj acc f `(fs/temp-dir ~(str f)))) [] folders)]
+    `(let ~bindings
+       (try
+         (do ~@body)
+         (finally
+           (doseq [x# ~folders]
+             (fs/delete-dir x#)))))))
+
