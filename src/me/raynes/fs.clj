@@ -633,7 +633,7 @@
   [folders & body]
   (let [bindings (reduce
                   (fn [acc f]
-                    (conj acc f `(fs/temp-dir ~(str f)))) [] folders)]
+                    (conj acc f `(temp-dir ~(str f)))) [] folders)]
     `(let ~bindings
        (try
          (do ~@body)
