@@ -609,35 +609,30 @@
   "Execute the `body` after binding a given vector of
    symbols to temp directory instances.
    will delete all temp directories after execution.
+
+   Example:
+   ```
+   (with-temp-dir [temp-dir1 temp-dir2]
+     (println temp-dir1)
+     (let [temp-file1 (str temp-dir1 'tuki.txt')
+           temp-file2 (str temp-dir2 'shuki.txt')]
+       (spit temp-file1 'hi')
+       (spit temp-file2 'buddy')
+       [(slurp temp-file1) (slurp temp-file2)]))
   
-  Example:
-  ```
-  (macroexpand
-    '(with-temp-dir [folder1 folder2]
-      [folder1 folder2]))
-  ```
-  
-  Should produce:
-  ```
-  (let* [folder1 (me.raynes.fs/temp-dir "folder1")
-         folder2 (me.raynes.fs/temp-dir "folder2")]
-    (try
-      (do
-	      [folder1 folder2])
-      (finally
-	      (clojure.core/doseq [x__30864__auto__ [folder1 folder2]]
-	        (me.raynes.fs/delete-dir x__30864__auto__)))))
-  ```
-  "
-  
-  [folders & body]
+   #<File /var/folders/lp/2tg9rhtj28g0y60n8nt_wq_c0000gp/T/temp-dir11490694621530-86140538>
+   ['hi' 'buddy']
+
+   (directory? '/var/folders/lp/2tg9rhtj28g0y60n8nt_wq_c0000gp/T/temp-dir11490694621530-8614053')
+   false"
+  [dirs & body]
   (let [bindings (reduce
-                  (fn [acc f]
-                    (conj acc f `(temp-dir ~(str f)))) [] folders)]
+                  (fn [acc dir]
+                    (conj acc dir `(temp-dir ~(str dir)))) [] dirs)]
     `(let ~bindings
        (try
          (do ~@body)
          (finally
-           (doseq [x# ~folders]
-             (fs/delete-dir x#)))))))
+           (reduce (fn [_# x#]
+                     (delete-dir x#)) ~dirs))))))
 
